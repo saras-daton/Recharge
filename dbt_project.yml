@@ -65,4 +65,4 @@ clean-targets:         # directories to be removed by `dbt clean`
 
 models:    
   Recharge:
-    +schema: stg_recharge_dbthub
+    +schema: stg_recharge
