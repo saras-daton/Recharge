@@ -88,6 +88,7 @@
             line_items.unit_price,
             line_items.unit_price_includes_tax,
             line_items.variant_title,
+            line_items.original_price,
             note,
             processed_at,
             scheduled_at,

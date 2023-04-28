@@ -60,9 +60,14 @@
             CAST({{ dbt.dateadd(datepart="hour", interval=hr, from_date_or_timestamp="a.created_at") }} as {{ dbt.type_timestamp() }}) as created_at,	
             utm_params.utm_source,
             utm_params.utm_medium,
+            utm_params.utm_campaign,
+            utm_params.utm_data_source,			
+            utm_params.utm_timestamp,			
+            utm_params.utm_content,			
+            utm_params.utm_term,			
             charge_interval_frequency,
-            external_product_id.ecommerce as external_product_id,
-            external_variant_id.ecommerce as external_variant_id,
+            external_product_id.ecommerce as external_product_id_ecommerce,
+            external_variant_id.ecommerce as external_variant_id_ecommerce,
             has_queued_charges,
             is_prepaid,
             is_skippable,
@@ -73,7 +78,8 @@
             order_interval_unit,
             price,
             product_title,
-            properties,
+            properties.name as properties_name,
+            properties.value as properties_value,
             quantity,
             sku,
             sku_override,
@@ -96,6 +102,7 @@
                 {{multi_unnesting("ANALYTICS_DATA","UTM_PARAMS")}}
                 {{unnesting("EXTERNAL_PRODUCT_ID")}}
                 {{unnesting("EXTERNAL_VARIANT_ID")}}
+                {{unnesting("PROPERTIES")}}
                 {% if is_incremental() %}
                 {# /* -- this filter will only be applied on an incremental run */ #}
                 WHERE a.{{daton_batch_runtime()}}  >= {{max_loaded}}

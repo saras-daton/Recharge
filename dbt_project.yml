@@ -7,8 +7,6 @@ config-version: 2
 
 require-dbt-version: [">=1.0.0", "<2.0.0"]
 
-profile: 'edm_data_transformation'
-
 vars:
   raw_database: "Recharge" #equivalent to project_id in BigQuery
   raw_schema: "Subscription" #equivalent to dataset in BigQuery
