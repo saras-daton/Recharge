@@ -20,7 +20,7 @@ SELECT coalesce(MAX(_daton_batch_runtime) - 2592000000,0) FROM {{ this }}
 {% endif %}
 
 {% set table_name_query %}
-{{set_table_name('%recharge_bq_products')}}    
+{{set_table_name('%recharge%products')}}    
 {% endset %}  
 
 {% set results = run_query(table_name_query) %}
