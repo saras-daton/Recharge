@@ -23,7 +23,7 @@
     {% endif %}
 
     {% set table_name_query %}
-        {{set_table_name('%recharge_bq_orders')}}    
+        {{set_table_name('%recharge%orders')}}    
     {% endset %} 
 
 
