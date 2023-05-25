@@ -19,7 +19,7 @@
     {% endif %}
 
     {% set table_name_query %}
-        {{set_table_name('%recharge_bq_subscriptions')}}    
+        {{set_table_name('%recharge%subscriptions')}}    
     {% endset %} 
 
     {% set results = run_query(table_name_query) %}
