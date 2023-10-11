@@ -7,7 +7,7 @@
 
 {% if is_incremental() %}
 {%- set max_loaded_query -%}
-SELECT coalesce(MAX(_daton_batch_runtime) - 2592000000,0) FROM {{ this }}
+select coalesce(MAX(_daton_batch_runtime) - 2592000000,0) from {{ this }}
 {% endset %}
 
 {%- set max_loaded_results = run_query(max_loaded_query) -%}
@@ -53,31 +53,27 @@ SELECT coalesce(MAX(_daton_batch_runtime) - 2592000000,0) FROM {{ this }}
             {% set hr = 0 %}
         {% endif %}
 
-    SELECT * {{exclude()}} (row_num)
-    From (
         select
         '{{brand}}' as brand,
         '{{store}}' as store,
-        id	,		
-        CAST({{ dbt.dateadd(datepart="hour", interval=hr, from_date_or_timestamp="created_at") }} as {{ dbt.type_timestamp() }}) as created_at,		
+        coalesce(cast(id as string),'NA') as id	,		
+        cast({{ dbt.dateadd(datepart="hour", interval=hr, from_date_or_timestamp="created_at") }} as {{ dbt.type_timestamp() }}) as created_at,		
         description	,		
         sort_order	,		
         title	,		
         type	,		
-        CAST({{ dbt.dateadd(datepart="hour", interval=hr, from_date_or_timestamp="updated_at") }} as {{ dbt.type_timestamp() }}) as updated_at,							
+        cast({{ dbt.dateadd(datepart="hour", interval=hr, from_date_or_timestamp="updated_at") }} as {{ dbt.type_timestamp() }}) as updated_at,							
         {{daton_user_id()}} as _daton_user_id,
         {{daton_batch_runtime()}} as _daton_batch_runtime,
         {{daton_batch_id()}} as _daton_batch_id,
         current_timestamp() as _last_updated,
         '{{env_var("DBT_CLOUD_RUN_ID", "manual")}}' as _run_id,
-        DENSE_RANK() OVER (PARTITION BY id order by {{daton_batch_runtime()}} desc) row_num
         from {{i}} 
             {% if is_incremental() %}
             {# /* -- this filter will only be applied on an incremental run */ #}
             WHERE {{daton_batch_runtime()}}  >= {{max_loaded}}
             --WHERE 1=1
             {% endif %}
-        )
-    where row_num =1 
+        qualify dense_rank() over (partition by id order by {{daton_batch_runtime()}} desc) = 1
     {% if not loop.last %} union all {% endif %}
     {% endfor %}
