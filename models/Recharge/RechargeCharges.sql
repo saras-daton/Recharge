@@ -1,65 +1,40 @@
-
-{% if var('RechargeCharges') %}
+    {% if var('RechargeCharges') %}
     {{ config( enabled = True ) }}
 {% else %}
     {{ config( enabled = False ) }}
 {% endif %}
-
 {% if var('currency_conversion_flag') %}
 --depends_on: {{ ref('ExchangeRates') }}
 {% endif %}
 
-{% if is_incremental() %}
-{%- set max_loaded_query -%}
-SELECT coalesce(MAX(_daton_batch_runtime) - 2592000000,0) FROM {{ this }}
-{% endset %}
+{% set relations = dbt_utils.get_relations_by_pattern(
+schema_pattern=var('raw_schema'),
+table_pattern=var('recharge_charges_tbl_ptrn'),
+exclude=var('recharge_charges_tbl_exclude_ptrn'),
+database=var('raw_database')) %}
 
-{%- set max_loaded_results = run_query(max_loaded_query) -%}
+{% for i in relations %}
+    {% if var('get_brandname_from_tablename_flag') %}
+        {% set brand =replace(i,'`','').split('.')[2].split('_')[var('brandname_position_in_tablename')] %}
+    {% else %}
+        {% set brand = var('default_brandname') %}
+    {% endif %}
 
-{%- if execute -%}
-{% set max_loaded = max_loaded_results.rows[0].values()[0] %}
-{% else %}
-{% set max_loaded = 0 %}
-{%- endif -%}
-{% endif %}
+    {% if var('get_storename_from_tablename_flag') %}
+        {% set store =replace(i,'`','').split('.')[2].split('_')[var('storename_position_in_tablename')] %}
+    {% else %}
+        {% set store = var('default_storename') %}
+    {% endif %}
 
-{% set table_name_query %}
-{{set_table_name('%recharge_bq_charges')}}    
-{% endset %}  
-
-{% set results = run_query(table_name_query) %}
-
-{% if execute %}
-    {# Return the first column #}
-    {% set results_list = results.columns[0].values() %}
-    {% set tables_lowercase_list = results.columns[1].values() %}
-{% else %}
-    {% set results_list = [] %}
-    {% set tables_lowercase_list = [] %}
-{% endif %}
-
-{% for i in results_list %}
-        {% if var('get_brandname_from_tablename_flag') %}
-            {% set brand =i.split('.')[2].split('_')[var('brandname_position_in_tablename')] %}
-        {% else %}
-            {% set brand = var('default_brandname') %}
-        {% endif %}
-
-        {% if var('get_storename_from_tablename_flag') %}
-            {% set store =i.split('.')[2].split('_')[var('storename_position_in_tablename')] %}
-        {% else %}
-            {% set store = var('default_storename') %}
-        {% endif %}
-
-        {% if var('timezone_conversion_flag') and i.lower() in tables_lowercase_list and i in var('raw_table_timezone_offset_hours') %}
+ {% if var('timezone_conversion_flag') and i.lower() in tables_lowercase_list and i in var('raw_table_timezone_offset_hours') %}
             {% set hr = var('raw_table_timezone_offset_hours')[i] %}
         {% else %}
             {% set hr = 0 %}
         {% endif %}
 
         select
-        '{{brand}}' as brand,
-        '{{store}}' as store,
+        '{{brand|replace("`","")}}' as brand,
+        '{{store|replace("`","")}}' as store,
         coalesce(cast(a.id as string),'NA') as id,		
         cast(address_id as string) as address_id,		
         {{extract_nested_value("billing_address","address1","string")}} as billing_address_address1,
@@ -226,9 +201,8 @@ SELECT coalesce(MAX(_daton_batch_runtime) - 2592000000,0) FROM {{ this }}
             {{unnesting("discount_codes")}}
             {% if is_incremental() %}
             {# /* -- this filter will only be applied on an incremental run */ #}
-            WHERE a.{{daton_batch_runtime()}}  >= {{max_loaded}}
-            --WHERE 1=1
-            {% endif %}
-    qualify dense_rank() over (partition by a.id order by a.{{daton_batch_runtime()}} desc)=1
-    {% if not loop.last %} union all {% endif %}
-    {% endfor %}
+            where {{daton_batch_runtime()}}  >= (select coalesce(max(_daton_batch_runtime) - {{ var('recharge_charges_lookback') }},0) from {{ this }})
+        {% endif %}
+            qualify row_number() over (partition by a.id, line_items_subscription_id, line_items_sku   order by a.{{daton_batch_runtime()}} desc)=1
+{% if not loop.last %} union all {% endif %}
+{% endfor %} 

@@ -10,8 +10,9 @@ require-dbt-version: [">=1.0.0", "<2.0.0"]
 profile: 'edm_data_transformation'
 
 vars:
-  raw_database: "Recharge" #equivalent to project_id in BigQuery
-  raw_schema: "Subscription" #equivalent to dataset in BigQuery
+  raw_database: "edm-saras" #equivalent to project_id in BigQuery
+  raw_schema: "EDM_Daton" #equivalent to dataset in BigQuery
+
   currency_conversion_flag: False
   get_brandname_from_tablename_flag: True
   brandname_position_in_tablename: 0
@@ -32,6 +33,69 @@ vars:
   RechargeOrderLineItems : True
   RechargeOrderLineItemsProperties : True
   RechargeSubscriptions : True
+
+  recharge_address_tbl_ptrn: '%recharge_bq_address'
+  recharge_address_tbl_exclude_ptrn: ''
+  recharge_address_lookback: 2592000000
+
+  recharge_charges_tbl_ptrn: '%recharge_bq_charges'
+  recharge_charges_tbl_exclude_ptrn: ''
+  recharge_charges_lookback: 2592000000
+  
+  recharge_customers_tbl_ptrn: '%recharge_bq_customers'
+  recharge_customers_tbl_exclude_ptrn: ''
+  recharge_customers_lookback: 2592000000
+
+  recharge_discounts_tbl_ptrn: '%recharge_bq_discounts'
+  recharge_discounts_tbl_exclude_ptrn: ''
+  recharge_discounts_lookback: 2592000000
+
+  recharge_onetimes_tbl_ptrn: '%recharge_bq_onetimes'
+  recharge_onetimes_tbl_exclude_ptrn: ''
+  recharge_onetimes_lookback: 2592000000
+
+  recharge_orderslineitems_tbl_ptrn: '%recharge_bq_orderslineitems'
+  recharge_orderslineitems_tbl_exclude_ptrn: ''
+  recharge_orderslineitems_lookback: 2592000000
+  recharge_address_tbl_ptrn: '%recharge_bq_address'
+  recharge_address_tbl_exclude_ptrn: ''
+  recharge_address_lookback: 2592000000
+
+  recharge_charges_tbl_ptrn: '%recharge_bq_charges'
+  recharge_charges_tbl_exclude_ptrn: ''
+  recharge_charges_lookback: 2592000000
+  
+  recharge_customers_tbl_ptrn: '%recharge_bq_customers'
+  recharge_customers_tbl_exclude_ptrn: ''
+  recharge_customers_lookback: 2592000000
+
+  recharge_discounts_tbl_ptrn: '%recharge_bq_discounts'
+  recharge_discounts_tbl_exclude_ptrn: ''
+  recharge_discounts_lookback: 2592000000
+
+  recharge_onetimes_tbl_ptrn: '%recharge_bq_onetimes'
+  recharge_onetimes_tbl_exclude_ptrn: ''
+  recharge_onetimes_lookback: 2592000000
+
+  recharge_orderslineitems_tbl_ptrn: '%recharge_bq_orders'
+  recharge_orderslineitems_tbl_exclude_ptrn: ''
+  recharge_orderslineitems_lookback: 2592000000
+  
+  recharge_orderslineitemsproperties_tbl_ptrn: '%recharge_bq_orders'
+  recharge_orderslineitemsproperties_tbl_exclude_ptrn: ''
+  recharge_orderslineitemsproperties_lookback: 2592000000
+
+  recharge_subscriptions_tbl_ptrn: '%recharge_bq_subscriptions'
+  recharge_subscriptions_tbl_exclude_ptrn: ''
+  recharge_subscriptions_lookback: 2592000000
+  
+  recharge_products_tbl_ptrn: '%recharge_bq_products'
+  recharge_products_tbl_exclude_ptrn: ''
+  recharge_products_lookback: 2592000000
+
+  recharge_collections_tbl_ptrn: '%recharge_bq_collections'
+  recharge_collections_tbl_exclude_ptrn: ''
+  recharge_collections_lookback: 2592000000
 
 
   timezone_conversion_flag : False

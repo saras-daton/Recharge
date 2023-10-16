@@ -1,61 +1,41 @@
-
+  
 {% if var('RechargeCollections') %}
     {{ config( enabled = True ) }}
 {% else %}
     {{ config( enabled = False ) }}
 {% endif %}
-
-{% if is_incremental() %}
-{%- set max_loaded_query -%}
-select coalesce(MAX(_daton_batch_runtime) - 2592000000,0) from {{ this }}
-{% endset %}
-
-{%- set max_loaded_results = run_query(max_loaded_query) -%}
-
-{%- if execute -%}
-{% set max_loaded = max_loaded_results.rows[0].values()[0] %}
-{% else %}
-{% set max_loaded = 0 %}
-{%- endif -%}
+{% if var('currency_conversion_flag') %}
+--depends_on: {{ ref('ExchangeRates') }}
 {% endif %}
 
-{% set table_name_query %}
-{{set_table_name('%recharge%collections')}}    
-{% endset %}  
+{% set relations = dbt_utils.get_relations_by_pattern(
+schema_pattern=var('raw_schema'),
+table_pattern=var('recharge_collections_tbl_ptrn'),
+exclude=var('recharge_collections_tbl_exclude_ptrn'),
+database=var('raw_database')) %}
 
-{% set results = run_query(table_name_query) %}
+{% for i in relations %}
+    {% if var('get_brandname_from_tablename_flag') %}
+        {% set brand =replace(i,'`','').split('.')[2].split('_')[var('brandname_position_in_tablename')] %}
+    {% else %}
+        {% set brand = var('default_brandname') %}
+    {% endif %}
 
-{% if execute %}
-    {# Return the first column #}
-    {% set results_list = results.columns[0].values() %}
-    {% set tables_lowercase_list = results.columns[1].values() %}
-{% else %}
-    {% set results_list = [] %}
-    {% set tables_lowercase_list = [] %}
-{% endif %}
+    {% if var('get_storename_from_tablename_flag') %}
+        {% set store =replace(i,'`','').split('.')[2].split('_')[var('storename_position_in_tablename')] %}
+    {% else %}
+        {% set store = var('default_storename') %}
+    {% endif %}
 
-{% for i in results_list %}
-        {% if var('get_brandname_from_tablename_flag') %}
-            {% set brand =i.split('.')[2].split('_')[var('brandname_position_in_tablename')] %}
-        {% else %}
-            {% set brand = var('default_brandname') %}
-        {% endif %}
-
-        {% if var('get_storename_from_tablename_flag') %}
-            {% set store =i.split('.')[2].split('_')[var('storename_position_in_tablename')] %}
-        {% else %}
-            {% set store = var('default_storename') %}
-        {% endif %}
-
-        {% if var('timezone_conversion_flag') and i.lower() in tables_lowercase_list and i in var('raw_table_timezone_offset_hours') %}
+ {% if var('timezone_conversion_flag') and i.lower() in tables_lowercase_list and i in var('raw_table_timezone_offset_hours') %}
             {% set hr = var('raw_table_timezone_offset_hours')[i] %}
         {% else %}
             {% set hr = 0 %}
         {% endif %}
 
         select
-        '{{brand}}' as brand,
-        '{{store}}' as store,
+        '{{brand|replace("`","")}}' as brand,
+        '{{store|replace("`","")}}' as store,
         coalesce(cast(id as string),'NA') as id	,		
         cast({{ dbt.dateadd(datepart="hour", interval=hr, from_date_or_timestamp="created_at") }} as {{ dbt.type_timestamp() }}) as created_at,		
         description	,		
@@ -71,9 +51,9 @@ select coalesce(MAX(_daton_batch_runtime) - 2592000000,0) from {{ this }}
         from {{i}} 
             {% if is_incremental() %}
             {# /* -- this filter will only be applied on an incremental run */ #}
-            WHERE {{daton_batch_runtime()}}  >= {{max_loaded}}
-            --WHERE 1=1
+            where {{daton_batch_runtime()}}  >= (select coalesce(max(_daton_batch_runtime) - {{ var('recharge_collections_lookback') }},0) from {{ this }})
             {% endif %}
-        qualify dense_rank() over (partition by id order by {{daton_batch_runtime()}} desc) = 1
-    {% if not loop.last %} union all {% endif %}
-    {% endfor %}
+            qualify dense_rank() over (partition by id order by {{daton_batch_runtime()}} desc) = 1
+{% if not loop.last %} union all {% endif %}
+{% endfor %} 
+

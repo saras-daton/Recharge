@@ -62,7 +62,7 @@ models:
         incremental_strategy : merge
         partition_by : { 'field': 'created_at', 'data_type': 'timestamp' }
         cluster_by : ['order_id'] 
-        unique_key : ['order_id','sku']
+        unique_key : ['order_id','line_items_sku']
 
   - name: RechargeOrdersLineItemsProperties
     description:  This Table provides details of all orders created after a Charge is successfully processed at line items granularity with properties.
@@ -71,7 +71,7 @@ models:
         incremental_strategy : merge
         partition_by : { 'field': 'created_at', 'data_type': 'timestamp' }
         cluster_by : ['order_id'] 
-        unique_key : ['order_id','sku','name']
+        unique_key : ['order_id','line_items_sku','properties_name']
 
   - name: RechargeProducts
     description: This table lists all the product records in recharge.
