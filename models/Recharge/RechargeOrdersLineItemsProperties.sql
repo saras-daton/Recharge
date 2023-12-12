@@ -7,35 +7,16 @@
 --depends_on: {{ ref('ExchangeRates') }}
 {% endif %}
  
-{% set relations = dbt_utils.get_relations_by_pattern(
-schema_pattern=var('raw_schema'),
-table_pattern=var('recharge_orderslineitemsproperties_tbl_ptrn'),
-exclude=var('recharge_orderslineitemsproperties_tbl_exclude_ptrn'),
-database=var('raw_database')) %}
- 
-{% for i in relations %}
-    {% if var('get_brandname_from_tablename_flag') %}
-        {% set brand =replace(i,'`','').split('.')[2].split('_')[var('brandname_position_in_tablename')] %}
-    {% else %}
-        {% set brand = var('default_brandname') %}
-    {% endif %}
- 
-    {% if var('get_storename_from_tablename_flag') %}
-        {% set store =replace(i,'`','').split('.')[2].split('_')[var('storename_position_in_tablename')] %}
-    {% else %}
-        {% set store = var('default_storename') %}
-    {% endif %}
- 
-{% if var('timezone_conversion_flag') and i.lower() in tables_lowercase_list and i in var('raw_table_timezone_offset_hours') %}
-            {% set hr = var('raw_table_timezone_offset_hours')[i] %}
-        {% else %}
-            {% set hr = 0 %}
-        {% endif %}
- 
-        select
-            '{{brand|replace("`","")}}' as brand,
-            '{{store|replace("`","")}}' as store,
-            coalesce(cast(a.id as string),'NA') as order_id,
+{# /*--calling macro for tables list and remove exclude pattern */ #}
+{% set result =set_table_name("recharge_orderslineitemsproperties_tbl_ptrn",'%recharge%orderslineitems',"recharge_orderslineitemsproperties_tbl_exclude_ptrn",'') %}
+{# /*--iterating through all the tables */ #}
+{% for i in result %}
+
+        select 
+        {{ extract_brand_and_store_name_from_table(i, var('brandname_position_in_tablename'), var('get_brandname_from_tablename_flag'), var('default_brandname')) }} as brand,
+        {{ extract_brand_and_store_name_from_table(i, var('storename_position_in_tablename'), var('get_storename_from_tablename_flag'), var('default_storename')) }} as store,
+
+            cast(a.id as string) as order_id,
             cast(address_id as string) address_id,
             {{extract_nested_value("charge","id","string")}} as charge_id,
             {{extract_nested_value("external_transaction_id","payment_processor","string")}} as external_transaction_id_payment_processor,
@@ -43,7 +24,7 @@ database=var('raw_database')) %}
             {{extract_nested_value("charge","status","string")}} as charge_status,
             {{extract_nested_value("client_details","browser_ip","string")}} as client_details_browser_ip,
             {{extract_nested_value("client_details","user_agent","string")}} as client_details_user_agent,
-            cast({{ dbt.dateadd(datepart="hour", interval=hr, from_date_or_timestamp="a.created_at") }} as {{ dbt.type_timestamp() }}) as created_at,
+            {{timezone_conversion("a.created_at")}} as created_at,
             currency,
             {{extract_nested_value("customer","id","string")}} as customer_id,
             {{extract_nested_value("customer","email","string")}} as customer_email,
@@ -65,7 +46,7 @@ database=var('raw_database')) %}
             {{extract_nested_value("properties","name","string")}} as properties_name,
             {{extract_nested_value("properties","value","string")}} as properties_value,
             {{extract_nested_value("line_items","purchase_item_type","string")}} as line_items_purchase_item_type,
-            coalesce(({{extract_nested_value("line_items","sku","string")}}),'NA') as line_items_sku,
+            {{extract_nested_value("line_items","sku","string")}} as line_items_sku,
             {{extract_nested_value("line_items","taxable","string")}} as line_items_taxable,
             {{extract_nested_value("line_items","title","string")}} as line_items_title,
             {{extract_nested_value("line_items","unit_price_includes_tax","string")}} as line_items_unit_price_includes_tax,
@@ -94,19 +75,12 @@ database=var('raw_database')) %}
             type,
             updated_at,     
             external_cart_token,
-            --order_attributes,
             error,
             {{extract_nested_value("tax_lines","price","numeric")}} as tax_lines_price,
             {{extract_nested_value("tax_lines","rate","string")}} as tax_lines_rate,
             {{extract_nested_value("tax_lines","title","string")}} as tax_lines_title,
             total_duties,
-            {% if var('currency_conversion_flag') %}
-                case when c.value is null then 1 else c.value end as exchange_currency_rate,
-                case when c.from_currency_code is null then a.currency else c.from_currency_code end as exchange_currency_code,
-            {% else %}
-                cast(1 as decimal) as exchange_currency_rate,
-                cast(null as string) as exchange_currency_code,
-            {% endif %}
+            {{ currency_conversion('c.value', 'c.from_currency_code', 'currency') }},
             a.{{daton_user_id()}},
             a.{{daton_batch_runtime()}},
             a.{{daton_batch_id()}},

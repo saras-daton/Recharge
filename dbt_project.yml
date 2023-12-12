@@ -22,6 +22,9 @@ vars:
   # Example- default_storename: "US"
   default_storename: "" 
 
+  timezone_conversion_flag : True
+  to_timezone: 'Europe/Dublin' # https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+
   RechargeCharges : True
   RechargeCustomers : True
   RechargeDiscounts : True
@@ -33,82 +36,71 @@ vars:
   RechargeOrderLineItemsProperties : True
   RechargeSubscriptions : True
 
-  recharge_address_tbl_ptrn: '%recharge_bq_address'
+
+  recharge_address_tbl_ptrn: '%recharge%address'
   recharge_address_tbl_exclude_ptrn: ''
-  recharge_address_lookback: 2592000000
+  recharge_address_lookback: 172800000
 
-  recharge_charges_tbl_ptrn: '%recharge_bq_charges'
+  recharge_charges_tbl_ptrn: '%recharge%charges'
   recharge_charges_tbl_exclude_ptrn: ''
-  recharge_charges_lookback: 2592000000
+  recharge_charges_lookback: 172800000
   
-  recharge_customers_tbl_ptrn: '%recharge_bq_customers'
+  recharge_customers_tbl_ptrn: '%recharge%customers'
   recharge_customers_tbl_exclude_ptrn: ''
-  recharge_customers_lookback: 2592000000
+  recharge_customers_lookback: 172800000
 
-  recharge_discounts_tbl_ptrn: '%recharge_bq_discounts'
+  recharge_discounts_tbl_ptrn: '%recharge%discounts'
   recharge_discounts_tbl_exclude_ptrn: ''
-  recharge_discounts_lookback: 2592000000
+  recharge_discounts_lookback: 172800000
 
-  recharge_onetimes_tbl_ptrn: '%recharge_bq_onetimes'
+  recharge_onetimes_tbl_ptrn: '%recharge%onetimes'
   recharge_onetimes_tbl_exclude_ptrn: ''
-  recharge_onetimes_lookback: 2592000000
+  recharge_onetimes_lookback: 172800000
 
-  recharge_orderslineitems_tbl_ptrn: '%recharge_bq_orderslineitems'
+  recharge_orderslineitems_tbl_ptrn: '%recharge%orderslineitems'
   recharge_orderslineitems_tbl_exclude_ptrn: ''
-  recharge_orderslineitems_lookback: 2592000000
-  recharge_address_tbl_ptrn: '%recharge_bq_address'
-  recharge_address_tbl_exclude_ptrn: ''
-  recharge_address_lookback: 2592000000
+  recharge_orderslineitems_lookback: 172800000
 
-  recharge_charges_tbl_ptrn: '%recharge_bq_charges'
+
+  recharge_charges_tbl_ptrn: '%recharge%charges'
   recharge_charges_tbl_exclude_ptrn: ''
-  recharge_charges_lookback: 2592000000
+  recharge_charges_lookback: 172800000
   
-  recharge_customers_tbl_ptrn: '%recharge_bq_customers'
+  recharge_customers_tbl_ptrn: '%recharge%customers'
   recharge_customers_tbl_exclude_ptrn: ''
-  recharge_customers_lookback: 2592000000
+  recharge_customers_lookback: 172800000
 
-  recharge_discounts_tbl_ptrn: '%recharge_bq_discounts'
+  recharge_discounts_tbl_ptrn: '%recharge%discounts'
   recharge_discounts_tbl_exclude_ptrn: ''
-  recharge_discounts_lookback: 2592000000
+  recharge_discounts_lookback: 172800000
 
-  recharge_onetimes_tbl_ptrn: '%recharge_bq_onetimes'
+  recharge_onetimes_tbl_ptrn: '%recharge%onetimes'
   recharge_onetimes_tbl_exclude_ptrn: ''
-  recharge_onetimes_lookback: 2592000000
+  recharge_onetimes_lookback: 172800000
 
-  recharge_orderslineitems_tbl_ptrn: '%recharge_bq_orders'
+  recharge_orderslineitems_tbl_ptrn: '%recharge%orders'
   recharge_orderslineitems_tbl_exclude_ptrn: ''
-  recharge_orderslineitems_lookback: 2592000000
+  recharge_orderslineitems_lookback: 172800000
   
-  recharge_orderslineitemsproperties_tbl_ptrn: '%recharge_bq_orders'
+  recharge_orderslineitemsproperties_tbl_ptrn: '%recharge%orders'
   recharge_orderslineitemsproperties_tbl_exclude_ptrn: ''
-  recharge_orderslineitemsproperties_lookback: 2592000000
+  recharge_orderslineitemsproperties_lookback: 172800000
 
-  recharge_subscriptions_tbl_ptrn: '%recharge_bq_subscriptions'
+  recharge_subscriptions_tbl_ptrn: '%recharge%subscriptions'
   recharge_subscriptions_tbl_exclude_ptrn: ''
-  recharge_subscriptions_lookback: 2592000000
+  recharge_subscriptions_lookback: 172800000
   
-  recharge_products_tbl_ptrn: '%recharge_bq_products'
+  recharge_products_tbl_ptrn: '%recharge%products'
   recharge_products_tbl_exclude_ptrn: ''
-  recharge_products_lookback: 2592000000
+  recharge_products_lookback: 172800000
 
-  recharge_collections_tbl_ptrn: '%recharge_bq_collections'
+  recharge_collections_tbl_ptrn: '%recharge%collections'
   recharge_collections_tbl_exclude_ptrn: ''
-  recharge_collections_lookback: 2592000000
+  recharge_collections_lookback: 172800000
 
 
-  timezone_conversion_flag : False
-  raw_table_timezone_offset_hours: {
-    "edm-saras.EDM_Daton.Brand_US_Recharge_BQ_Charges" : -7,
-    "edm-saras.EDM_Daton.Brand_US_Recharge_BQ_Customers" : -7,
-    "edm-saras.EDM_Daton.Brand_US_Recharge_BQ_Discounts" : -7,
-    "edm-saras.EDM_Daton.Brand_US_Recharge_BQ_Onetimes" : -7,
-    "edm-saras.EDM_Daton.Brand_US_Recharge_BQ_Address" : -7,
-    "edm-saras.EDM_Daton.Brand_US_Recharge_BQ_Products" : -7,
-    "edm-saras.EDM_Daton.Brand_US_Recharge_BQ_Collections" : -7,
-    "edm-saras.EDM_Daton.Brand_US_Recharge_BQ_Orders" : -7,
-    "edm-saras.EDM_Daton.Brand_US_Recharge_BQ_Subscriptions" : -7
-    }
+
+
 
   
 # These configurations specify where dbt should look for different types of files.

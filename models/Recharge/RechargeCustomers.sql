@@ -8,44 +8,19 @@
 --depends_on: {{ ref('ExchangeRates') }}
 {% endif %}
 
-{% set relations = dbt_utils.get_relations_by_pattern(
-schema_pattern=var('raw_schema'),
-table_pattern=var('recharge_customers_tbl_ptrn'),
-exclude=var('recharge_customers_tbl_exclude_ptrn'),
-database=var('raw_database')) %}
+{# /*--calling macro for tables list and remove exclude pattern */ #}
+{% set result =set_table_name("recharge_customers_tbl_ptrn",'%recharge%customers',"recharge_customers_tbl_exclude_ptrn",'') %}
+{# /*--iterating through all the tables */ #}
+{% for i in result %}
 
-{% for i in relations %}
-    {% if var('get_brandname_from_tablename_flag') %}
-        {% set brand =replace(i,'`','').split('.')[2].split('_')[var('brandname_position_in_tablename')] %}
-    {% else %}
-        {% set brand = var('default_brandname') %}
-    {% endif %}
-
-    {% if var('get_storename_from_tablename_flag') %}
-        {% set store =replace(i,'`','').split('.')[2].split('_')[var('storename_position_in_tablename')] %}
-    {% else %}
-        {% set store = var('default_storename') %}
-    {% endif %}
-
- {% if var('timezone_conversion_flag') and i.lower() in tables_lowercase_list and i in var('raw_table_timezone_offset_hours') %}
-            {% set hr = var('raw_table_timezone_offset_hours')[i] %}
-        {% else %}
-            {% set hr = 0 %}
-        {% endif %}
-        
-    /*select * {{exclude()}} (row_num)
-    from ( */
-        select
-        '{{brand|replace("`","")}}' as brand,
-        '{{store|replace("`","")}}' as store,
-        coalesce(cast(a.id as string),'NA') as id	,	
-        cast({{ dbt.dateadd(datepart="hour", interval=hr, from_date_or_timestamp="created_at") }} as {{ dbt.type_timestamp() }}) as created_at,	
+        select 
+        {{ extract_brand_and_store_name_from_table(i, var('brandname_position_in_tablename'), var('get_brandname_from_tablename_flag'), var('default_brandname')) }} as brand,
+        {{ extract_brand_and_store_name_from_table(i, var('storename_position_in_tablename'), var('get_storename_from_tablename_flag'), var('default_storename')) }} as store,
+        cast(a.id as string) as id	,	
+        {{timezone_conversion("created_at")}} as created_at,
         email	,		
-        --external_customer_id	,
         {{extract_nested_value("external_customer_id","ecommerce","string")}} as external_customer_id_ecommerce,
-       -- first_charge_processed_at	,		
-        cast({{ dbt.dateadd(datepart="hour", interval=hr, from_date_or_timestamp="first_charge_processed_at") }} as {{ dbt.type_timestamp() }}) as first_charge_processed_at,	
-
+        {{timezone_conversion("first_charge_processed_at")}} as first_charge_processed_at,	
         first_name	,		
         has_payment_method_in_dunning	,		
         has_valid_payment_method,		
@@ -53,10 +28,9 @@ database=var('raw_database')) %}
         last_name	,		
         subscriptions_active_count	,		
         subscriptions_total_count	,		
-        cast({{ dbt.dateadd(datepart="hour", interval=hr, from_date_or_timestamp="updated_at") }} as {{ dbt.type_timestamp() }}) as updated_at,	
+        {{timezone_conversion("updated_at")}} as updated_at,
         tax_exempt	,		
         phone	,		
-        --analytics_data	,
         {{extract_nested_value("utm_params","utm_data_source","string")}} as utm_params_utm_data_source,
         {{extract_nested_value("utm_params","utm_source","string")}} as utm_params_utm_source,
         {{extract_nested_value("utm_params","utm_timestamp","datetime")}} as utm_params_utm_timestamp,
@@ -92,7 +66,6 @@ database=var('raw_database')) %}
         {{daton_batch_id()}} as _daton_batch_id,
         current_timestamp() as _last_updated,
         '{{env_var("DBT_CLOUD_RUN_ID", "manual")}}' as _run_id,
-        /*dense_rank() over (partition by id order by {{daton_batch_runtime()}} desc) row_num*/
         from {{i}} a
             {{unnesting("external_customer_id")}}
             {{unnesting("analytics_data")}}
@@ -104,6 +77,6 @@ database=var('raw_database')) %}
             {# /* -- this filter will only be applied on an incremental run */ #}
             where {{daton_batch_runtime()}}  >= (select coalesce(max(_daton_batch_runtime) - {{ var('recharge_customers_lookback') }},0) from {{ this }})
         {% endif %}
-            qualify row_number() over (partition by a.id, email order by {{daton_batch_runtime()}} desc) = 1
+            qualify dense_rank() over (partition by a.id, email order by {{daton_batch_runtime()}} desc) = 1
 {% if not loop.last %} union all {% endif %}
 {% endfor %} 
